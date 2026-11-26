@@ -44,6 +44,7 @@ export class FirebaseService {
   readonly authReady = signal(false);
 
   private readonly progressCache = new Map<string, Map<string, WordProgress>>();
+  private readonly bookmarkCache = new Map<string, Set<string>>();
 
   constructor() {
     this.app = getApps().length ? getApps()[0] : initializeApp(environment.firebase);
@@ -62,6 +63,7 @@ export class FirebaseService {
     onAuthStateChanged(this.auth, (u) => {
       if (!u) {
         this.progressCache.clear();
+        this.bookmarkCache.clear();
       }
       this.user.set(u);
       this.authReady.set(true);
@@ -74,6 +76,7 @@ export class FirebaseService {
     try {
       await signInWithPopup(this.auth, provider);
       this.progressCache.clear();
+      this.bookmarkCache.clear();
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code ?? '';
       if (
@@ -89,6 +92,7 @@ export class FirebaseService {
 
   async logout(): Promise<void> {
     this.progressCache.clear();
+    this.bookmarkCache.clear();
     await signOut(this.auth);
   }
 
@@ -102,6 +106,10 @@ export class FirebaseService {
 
   private guestStatsStorageKey(mode: StudyMode, level: HskLevel): string {
     return `hsk_guest_daily_stats_v1_${mode}_${level}`;
+  }
+
+  private guestBookmarksStorageKey(mode: StudyMode, level: HskLevel): string {
+    return `hsk_guest_bookmarks_v1_${mode}_${level}`;
   }
 
   private todayDateKey(): string {
@@ -350,5 +358,84 @@ export class FirebaseService {
         oboeta: val.oboeta ?? 0,
         daijobu: val.daijobu ?? 0,
       }));
+  }
+
+  /**
+   * 指定モード・級のブックマーク済み wordId セットを取得する
+   */
+  async loadBookmarks(mode: StudyMode, level: HskLevel): Promise<Set<string>> {
+    while (!this.authReady()) {
+      await new Promise((r) => setTimeout(r, 20));
+    }
+
+    const key = this.cacheKey(mode, level);
+    const cached = this.bookmarkCache.get(key);
+    if (cached) return cached;
+
+    const u = this.user();
+    let ids: string[] = [];
+
+    if (!u) {
+      if (typeof localStorage !== 'undefined') {
+        try {
+          const raw = localStorage.getItem(
+            this.guestBookmarksStorageKey(mode, level),
+          );
+          if (raw) ids = JSON.parse(raw) as string[];
+        } catch {
+          ids = [];
+        }
+      }
+    } else {
+      const ref = doc(this.db, 'users', u.uid, 'bookmarks', `${mode}_${level}`);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const data = snap.data() as { wordIds?: string[] };
+        ids = data.wordIds ?? [];
+      }
+    }
+
+    const set = new Set(ids);
+    this.bookmarkCache.set(key, set);
+    return set;
+  }
+
+  /**
+   * ブックマークの ON / OFF を保存する（モード・級ごとに独立管理）
+   */
+  async setBookmark(
+    mode: StudyMode,
+    level: HskLevel,
+    wordId: string,
+    bookmarked: boolean,
+  ): Promise<Set<string>> {
+    const key = this.cacheKey(mode, level);
+    const set = new Set(await this.loadBookmarks(mode, level));
+    if (bookmarked) {
+      set.add(wordId);
+    } else {
+      set.delete(wordId);
+    }
+    this.bookmarkCache.set(key, set);
+
+    const arr = Array.from(set);
+    const u = this.user();
+    if (!u) {
+      if (typeof localStorage !== 'undefined') {
+        try {
+          localStorage.setItem(
+            this.guestBookmarksStorageKey(mode, level),
+            JSON.stringify(arr),
+          );
+        } catch {
+          // ignore
+        }
+      }
+      return set;
+    }
+
+    const ref = doc(this.db, 'users', u.uid, 'bookmarks', `${mode}_${level}`);
+    await setDoc(ref, { wordIds: arr });
+    return set;
   }
 }

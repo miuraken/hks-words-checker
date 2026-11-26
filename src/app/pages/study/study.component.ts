@@ -10,6 +10,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -34,6 +35,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
   imports: [
     MatButtonModule,
     MatCardModule,
+    MatCheckboxModule,
     MatIconModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
@@ -158,13 +160,22 @@ import { VocabularyService } from '../../services/vocabulary.service';
                   復習
                 }
               </span>
-              <div class="streak-dots" aria-label="連続正解数">
-                @for (step of [1, 2, 3]; track step) {
-                  <span
-                    class="dot"
-                    [class.filled]="(card.progress?.streak ?? 0) >= step"
-                  ></span>
-                }
+              <div class="meta-right" (click)="$event.stopPropagation()">
+                <mat-checkbox
+                  class="bookmark-cb"
+                  [checked]="bookmarks().has(card.word.id)"
+                  (change)="onToggleBookmark(card.word.id, $event.checked)"
+                >
+                  ブックマーク
+                </mat-checkbox>
+                <div class="streak-dots" aria-label="連続正解数">
+                  @for (step of [1, 2, 3]; track step) {
+                    <span
+                      class="dot"
+                      [class.filled]="(card.progress?.streak ?? 0) >= step"
+                    ></span>
+                  }
+                </div>
               </div>
             </div>
 
@@ -342,6 +353,15 @@ import { VocabularyService } from '../../services/vocabulary.service';
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 8px;
+    }
+    .meta-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .bookmark-cb {
+      font-size: 0.78rem;
     }
     .status-pill {
       font-size: 0.75rem;
@@ -604,6 +624,7 @@ export class StudyComponent implements OnInit, OnDestroy {
   readonly nantonakuCount = signal(0);
   readonly madamadaCount = signal(0);
   readonly archivedInSession = signal(0);
+  readonly bookmarks = signal<Set<string>>(new Set());
 
   private allWords: VocabWord[] = [];
   private progressMap = new Map<string, WordProgress>();
@@ -631,12 +652,14 @@ export class StudyComponent implements OnInit, OnDestroy {
   private async loadDataAndStart(includeAhead: boolean): Promise<void> {
     this.loading.set(true);
     try {
-      const [words, progMap] = await Promise.all([
+      const [words, progMap, bms] = await Promise.all([
         this.vocab.getLevelWords(this.level()),
         this.fb.loadLevelProgress(this.mode(), this.level()),
+        this.fb.loadBookmarks(this.mode(), this.level()),
       ]);
       this.allWords = words;
       this.progressMap = progMap;
+      this.bookmarks.set(bms);
       this.startSession(includeAhead);
     } finally {
       this.loading.set(false);
@@ -773,6 +796,21 @@ export class StudyComponent implements OnInit, OnDestroy {
         this.submitScore('daijobu');
       }
     }
+  }
+
+  onToggleBookmark(wordId: string, checked: boolean): void {
+    const next = new Set(this.bookmarks());
+    if (checked) {
+      next.add(wordId);
+    } else {
+      next.delete(wordId);
+    }
+    this.bookmarks.set(next);
+    this.fb.setBookmark(this.mode(), this.level(), wordId, checked).catch(() => {
+      this.snackBar.open('ブックマークの保存に失敗しました', '閉じる', {
+        duration: 2500,
+      });
+    });
   }
 
   goHome(): void {

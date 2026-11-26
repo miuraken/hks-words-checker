@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -26,6 +27,7 @@ interface WordRow {
   word: VocabWord;
   status: WordStatus;
   progress: WordProgress | null;
+  bookmarked: boolean;
 }
 
 @Component({
@@ -36,6 +38,7 @@ interface WordRow {
     MatButtonModule,
     MatButtonToggleModule,
     MatCardModule,
+    MatCheckboxModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -89,6 +92,15 @@ interface WordRow {
         <mat-button-toggle value="new">未学習</mat-button-toggle>
       </mat-button-toggle-group>
 
+      <div class="bookmark-filter-row">
+        <mat-checkbox
+          [checked]="onlyBookmarked()"
+          (change)="onlyBookmarked.set($event.checked)"
+        >
+          ブックマークのみ表示 ({{ bookmarkCount() }})
+        </mat-checkbox>
+      </div>
+
       @if (loading()) {
         <div class="center-box">
           <mat-spinner diameter="36" />
@@ -115,6 +127,12 @@ interface WordRow {
                 <div class="meaning">{{ row.word.meaning }}</div>
               </div>
               <div class="word-actions">
+                <mat-checkbox
+                  [checked]="row.bookmarked"
+                  (change)="onToggleBookmark(row, $event.checked)"
+                  aria-label="ブックマーク"
+                  matTooltip="ブックマーク"
+                ></mat-checkbox>
                 <button
                   mat-icon-button
                   (click)="tts.speak(row.word.hanzi)"
@@ -173,6 +191,10 @@ interface WordRow {
       width: 100%;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
+    }
+    .bookmark-filter-row {
+      display: flex;
+      align-items: center;
     }
     .center-box {
       display: flex;
@@ -267,15 +289,22 @@ export class WordsComponent implements OnInit {
   readonly loading = signal(true);
   readonly searchText = signal('');
   readonly filterStatus = signal<'all' | WordStatus>('all');
+  readonly onlyBookmarked = signal(false);
   readonly displayLimit = signal(50);
 
   private readonly rows = signal<WordRow[]>([]);
 
+  readonly bookmarkCount = computed(
+    () => this.rows().filter((r) => r.bookmarked).length,
+  );
+
   readonly filteredRows = computed(() => {
     const q = this.searchText().trim().toLowerCase();
     const status = this.filterStatus();
+    const bmOnly = this.onlyBookmarked();
 
     return this.rows().filter((r) => {
+      if (bmOnly && !r.bookmarked) return false;
       if (status !== 'all' && r.status !== status) return false;
       if (!q) return true;
       return (
@@ -301,20 +330,30 @@ export class WordsComponent implements OnInit {
   private async loadRows(): Promise<void> {
     this.loading.set(true);
     try {
-      const [words, progMap] = await Promise.all([
+      const [words, progMap, bms] = await Promise.all([
         this.vocab.getLevelWords(this.level()),
         this.fb.loadLevelProgress(this.mode(), this.level()),
+        this.fb.loadBookmarks(this.mode(), this.level()),
       ]);
       this.rows.set(
         words.map((word) => {
           const progress = progMap.get(word.id) ?? null;
           const status: WordStatus = progress ? progress.status : 'new';
-          return { word, progress, status };
+          return { word, progress, status, bookmarked: bms.has(word.id) };
         }),
       );
     } finally {
       this.loading.set(false);
     }
+  }
+
+  async onToggleBookmark(row: WordRow, checked: boolean): Promise<void> {
+    this.rows.update((list) =>
+      list.map((r) =>
+        r.word.id === row.word.id ? { ...r, bookmarked: checked } : r,
+      ),
+    );
+    await this.fb.setBookmark(this.mode(), this.level(), row.word.id, checked);
   }
 
   async onResetWord(row: WordRow): Promise<void> {
