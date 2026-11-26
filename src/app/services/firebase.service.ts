@@ -16,6 +16,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   initializeFirestore,
   persistentLocalCache,
@@ -25,7 +26,13 @@ import {
   where,
 } from 'firebase/firestore';
 import { environment } from '../../environments/environment';
-import { HskLevel, StudyMode, WordProgress } from '../models/vocab.model';
+import {
+  DailyStatSnapshot,
+  HskLevel,
+  StudyMode,
+  WordProgress,
+} from '../models/vocab.model';
+import { normalizeScore } from './srs.service';
 
 @Injectable({ providedIn: 'root' })
 export class FirebaseService {
@@ -91,6 +98,18 @@ export class FirebaseService {
 
   private guestStorageKey(mode: StudyMode, level: HskLevel): string {
     return `hsk_guest_progress_v1_${mode}_${level}`;
+  }
+
+  private guestStatsStorageKey(mode: StudyMode, level: HskLevel): string {
+    return `hsk_guest_daily_stats_v1_${mode}_${level}`;
+  }
+
+  private todayDateKey(): string {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 
   private docId(mode: StudyMode, wordId: string): string {
@@ -187,6 +206,7 @@ export class FirebaseService {
     const u = this.user();
     if (!u) {
       this.writeGuestMap(progress.mode, progress.level, cached);
+      await this.recordDailySnapshot(progress.mode, progress.level, cached);
       return;
     }
 
@@ -198,6 +218,7 @@ export class FirebaseService {
       this.docId(progress.mode, progress.wordId),
     );
     await setDoc(ref, progress);
+    await this.recordDailySnapshot(progress.mode, progress.level, cached);
   }
 
   /**
@@ -218,6 +239,7 @@ export class FirebaseService {
     if (!u) {
       if (cached) {
         this.writeGuestMap(mode, level, cached);
+        await this.recordDailySnapshot(mode, level, cached);
       }
       return;
     }
@@ -230,5 +252,103 @@ export class FirebaseService {
       this.docId(mode, wordId),
     );
     await deleteDoc(ref);
+    if (cached) {
+      await this.recordDailySnapshot(mode, level, cached);
+    }
+  }
+
+  /**
+   * 当日の累積ステータス内訳をスナップショット保存する（学習した日のみ記録）
+   */
+  private async recordDailySnapshot(
+    mode: StudyMode,
+    level: HskLevel,
+    progressMap: Map<string, WordProgress>,
+  ): Promise<void> {
+    let madamada = 0;
+    let nantonaku = 0;
+    let oboeta = 0;
+    let daijobu = 0;
+
+    for (const prog of progressMap.values()) {
+      if (prog.status === 'archived') {
+        daijobu++;
+      } else {
+        const norm = normalizeScore(prog.lastResult);
+        if (norm === 'madamada') madamada++;
+        else if (norm === 'nantonaku') nantonaku++;
+        else if (norm === 'oboeta') oboeta++;
+      }
+    }
+
+    const dateKey = this.todayDateKey();
+    const entry = { madamada, nantonaku, oboeta, daijobu };
+
+    const u = this.user();
+    if (!u) {
+      if (typeof localStorage === 'undefined') return;
+      try {
+        const raw = localStorage.getItem(this.guestStatsStorageKey(mode, level));
+        const days: Record<string, Omit<DailyStatSnapshot, 'date'>> = raw
+          ? JSON.parse(raw)
+          : {};
+        days[dateKey] = entry;
+        localStorage.setItem(
+          this.guestStatsStorageKey(mode, level),
+          JSON.stringify(days),
+        );
+      } catch {
+        // ignore storage errors
+      }
+      return;
+    }
+
+    const ref = doc(this.db, 'users', u.uid, 'dailyStats', `${mode}_${level}`);
+    await setDoc(ref, { days: { [dateKey]: entry } }, { merge: true });
+  }
+
+  /**
+   * 学習した日の日次累積統計を日付昇順で取得する（未学習日は含まれない）
+   */
+  async loadDailyStats(
+    mode: StudyMode,
+    level: HskLevel,
+  ): Promise<DailyStatSnapshot[]> {
+    while (!this.authReady()) {
+      await new Promise((r) => setTimeout(r, 20));
+    }
+
+    const u = this.user();
+    let days: Record<string, Omit<DailyStatSnapshot, 'date'>> = {};
+
+    if (!u) {
+      if (typeof localStorage !== 'undefined') {
+        try {
+          const raw = localStorage.getItem(this.guestStatsStorageKey(mode, level));
+          if (raw) days = JSON.parse(raw);
+        } catch {
+          days = {};
+        }
+      }
+    } else {
+      const ref = doc(this.db, 'users', u.uid, 'dailyStats', `${mode}_${level}`);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const data = snap.data() as {
+          days?: Record<string, Omit<DailyStatSnapshot, 'date'>>;
+        };
+        days = data.days ?? {};
+      }
+    }
+
+    return Object.entries(days)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, val]) => ({
+        date,
+        madamada: val.madamada ?? 0,
+        nantonaku: val.nantonaku ?? 0,
+        oboeta: val.oboeta ?? 0,
+        daijobu: val.daijobu ?? 0,
+      }));
   }
 }

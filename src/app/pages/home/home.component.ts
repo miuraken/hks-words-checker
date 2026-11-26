@@ -138,13 +138,21 @@ const LEVELS: HskLevel[] = [1, 2, 3, 4, 5, 6];
                     一覧
                   </button>
                   <button
+                    mat-stroked-button
+                    (click)="openStats(item.level)"
+                    aria-label="HSK{{ item.level }}級の推移グラフ"
+                  >
+                    <mat-icon>bar_chart</mat-icon>
+                    推移
+                  </button>
+                  <button
                     mat-flat-button
                     color="primary"
                     class="start-btn"
                     (click)="startStudy(item.level)"
                   >
                     <mat-icon>play_arrow</mat-icon>
-                    特訓スタート
+                    スタート
                   </button>
                 </div>
               </mat-card>
@@ -316,6 +324,9 @@ export class HomeComponent implements OnInit {
       learning: 0,
       dueNow: 0,
       unseen: HSK_LEVEL_TOTALS[level],
+      madamada: 0,
+      nantonaku: 0,
+      oboeta: 0,
     })),
   );
 
@@ -355,6 +366,10 @@ export class HomeComponent implements OnInit {
 
   openWordList(level: HskLevel): void {
     this.router.navigate(['/words', this.selectedMode(), level]);
+  }
+
+  openStats(level: HskLevel): void {
+    this.router.navigate(['/stats', this.selectedMode(), level]);
   }
 
   async onGoogleLogin(): Promise<void> {

@@ -105,17 +105,21 @@ import { VocabularyService } from '../../services/vocabulary.service';
           <mat-icon class="big-icon done-icon">celebration</mat-icon>
           <h2>セット完了！</h2>
           <div class="result-grid">
-            <div class="result-box circle-box">
-              <span class="num">{{ circleCount() }}</span>
-              <span class="lbl">◯ 自信あり</span>
+            <div class="result-box daijobu-box">
+              <span class="num">{{ daijobuCount() }}</span>
+              <span class="lbl">もう大丈夫</span>
             </div>
-            <div class="result-box triangle-box">
-              <span class="num">{{ triangleCount() }}</span>
-              <span class="lbl">△ たまたま</span>
+            <div class="result-box oboeta-box">
+              <span class="num">{{ oboetaCount() }}</span>
+              <span class="lbl">覚えた</span>
             </div>
-            <div class="result-box cross-box">
-              <span class="num">{{ crossCount() }}</span>
-              <span class="lbl">✗ 外れた</span>
+            <div class="result-box nantonaku-box">
+              <span class="num">{{ nantonakuCount() }}</span>
+              <span class="lbl">なんとなく</span>
+            </div>
+            <div class="result-box madamada-box">
+              <span class="num">{{ madamadaCount() }}</span>
+              <span class="lbl">まだまだ</span>
             </div>
           </div>
           @if (archivedInSession() > 0) {
@@ -234,27 +238,35 @@ import { VocabularyService } from '../../services/vocabulary.service';
             <div class="score-buttons">
               <button
                 mat-flat-button
-                class="score-btn cross-btn"
-                (click)="submitScore('cross')"
+                class="score-btn madamada-btn"
+                (click)="submitScore('madamada')"
               >
-                <span class="symbol">✗</span>
-                <span class="label">外れた</span>
+                <span class="label">まだまだ</span>
+                <span class="sub">もう1回</span>
               </button>
               <button
                 mat-flat-button
-                class="score-btn triangle-btn"
-                (click)="submitScore('triangle')"
+                class="score-btn nantonaku-btn"
+                (click)="submitScore('nantonaku')"
               >
-                <span class="symbol">△</span>
-                <span class="label">たまたま</span>
+                <span class="label">なんとなく</span>
+                <span class="sub">6時間後</span>
               </button>
               <button
                 mat-flat-button
-                class="score-btn circle-btn"
-                (click)="submitScore('circle')"
+                class="score-btn oboeta-btn"
+                (click)="submitScore('oboeta')"
               >
-                <span class="symbol">◯</span>
-                <span class="label">自信あり</span>
+                <span class="label">覚えた</span>
+                <span class="sub">忘却曲線</span>
+              </button>
+              <button
+                mat-flat-button
+                class="score-btn daijobu-btn"
+                (click)="submitScore('daijobu')"
+              >
+                <span class="label">もう大丈夫</span>
+                <span class="sub">今後除外</span>
               </button>
             </div>
           }
@@ -427,12 +439,12 @@ import { VocabularyService } from '../../services/vocabulary.service';
     }
     .score-buttons {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
     }
     .score-btn {
-      height: 68px;
-      border-radius: 16px;
+      height: 58px;
+      border-radius: 14px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -444,24 +456,28 @@ import { VocabularyService } from '../../services/vocabulary.service';
         align-items: center;
         gap: 2px;
       }
-      .symbol {
-        font-size: 1.35rem;
+      .label {
+        font-size: 0.92rem;
         font-weight: 700;
       }
-      .label {
-        font-size: 0.78rem;
-        font-weight: 600;
+      .sub {
+        font-size: 0.7rem;
+        opacity: 0.85;
       }
     }
-    .cross-btn {
+    .madamada-btn {
       background-color: #ffdad6 !important;
       color: #410002 !important;
     }
-    .triangle-btn {
+    .nantonaku-btn {
       background-color: #ffdea6 !important;
       color: #271900 !important;
     }
-    .circle-btn {
+    .oboeta-btn {
+      background-color: #cce8e8 !important;
+      color: #004f4f !important;
+    }
+    .daijobu-btn {
       background-color: #c4eed0 !important;
       color: #072711 !important;
     }
@@ -495,7 +511,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
     .result-grid {
       width: 100%;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 8px;
       margin: 8px 0;
     }
@@ -510,18 +526,23 @@ import { VocabularyService } from '../../services/vocabulary.service';
         font-weight: 700;
       }
       .lbl {
-        font-size: 0.75rem;
+        font-size: 0.78rem;
+        font-weight: 600;
       }
     }
-    .circle-box {
+    .daijobu-box {
       background: #e6f4ea;
       color: #0d652d;
     }
-    .triangle-box {
+    .oboeta-box {
+      background: #e0f2f1;
+      color: #006a6a;
+    }
+    .nantonaku-box {
       background: #fef7e0;
       color: #b06000;
     }
-    .cross-box {
+    .madamada-box {
       background: #fce8e6;
       color: #c5221f;
     }
@@ -571,9 +592,10 @@ export class StudyComponent implements OnInit, OnDestroy {
   readonly sessionFinished = signal(false);
   readonly ttsRate = signal(1.0);
 
-  readonly circleCount = signal(0);
-  readonly triangleCount = signal(0);
-  readonly crossCount = signal(0);
+  readonly daijobuCount = signal(0);
+  readonly oboetaCount = signal(0);
+  readonly nantonakuCount = signal(0);
+  readonly madamadaCount = signal(0);
   readonly archivedInSession = signal(0);
 
   private allWords: VocabWord[] = [];
@@ -626,9 +648,10 @@ export class StudyComponent implements OnInit, OnDestroy {
     this.currentIndex.set(0);
     this.isRevealed.set(false);
     this.sessionFinished.set(false);
-    this.circleCount.set(0);
-    this.triangleCount.set(0);
-    this.crossCount.set(0);
+    this.daijobuCount.set(0);
+    this.oboetaCount.set(0);
+    this.nantonakuCount.set(0);
+    this.madamadaCount.set(0);
     this.archivedInSession.set(0);
 
     if (selected.length > 0 && this.mode() === 'audio') {
@@ -659,9 +682,12 @@ export class StudyComponent implements OnInit, OnDestroy {
     const card = this.currentCard();
     if (!card) return;
 
-    if (score === 'circle') this.circleCount.update((c) => c + 1);
-    else if (score === 'triangle') this.triangleCount.update((c) => c + 1);
-    else this.crossCount.update((c) => c + 1);
+    if (score === 'daijobu') this.daijobuCount.update((c) => c + 1);
+    else if (score === 'oboeta' || score === 'circle')
+      this.oboetaCount.update((c) => c + 1);
+    else if (score === 'nantonaku' || score === 'triangle')
+      this.nantonakuCount.update((c) => c + 1);
+    else this.madamadaCount.update((c) => c + 1);
 
     const updated = this.srs.calculateNextProgress(
       card.word,
@@ -674,33 +700,29 @@ export class StudyComponent implements OnInit, OnDestroy {
 
     if (updated.status === 'archived') {
       this.archivedInSession.update((c) => c + 1);
-      this.snackBar.open(
-        `「${card.word.hanzi}」を習得済みにアーカイブしました！`,
-        undefined,
-        { duration: 2000 },
-      );
+      const msg =
+        score === 'daijobu'
+          ? `「${card.word.hanzi}」を今後出題しないリストへ移動しました`
+          : `「${card.word.hanzi}」を習得済みにアーカイブしました！`;
+      this.snackBar.open(msg, undefined, { duration: 2000 });
     }
 
-    // Firestore への保存は非同期で実行（UX を止めない）
+    // Firestore / localStorage への保存は非同期で実行（UX を止めない）
     this.fb.saveProgress(updated).catch(() => {
       this.snackBar.open('進捗の保存に失敗しました', '閉じる', {
         duration: 3000,
       });
     });
 
-    // △ または ✗ の場合、このセッション後半に再出題キューへ追加
+    // 「まだまだ」の場合のみ、同じセッションの3問後に再出題キューへ追加
     const nextQueue = [...this.queue()];
-    if (score === 'triangle' || score === 'cross') {
+    if (score === 'madamada' || score === 'cross') {
       const retryCard: SessionCard = {
         word: card.word,
         progress: updated,
         isRetryInSession: true,
       };
-      const offset = score === 'cross' ? 3 : 5;
-      const insertAt = Math.min(
-        this.currentIndex() + 1 + offset,
-        nextQueue.length,
-      );
+      const insertAt = Math.min(this.currentIndex() + 4, nextQueue.length);
       nextQueue.splice(insertAt, 0, retryCard);
       this.queue.set(nextQueue);
     }
@@ -734,12 +756,14 @@ export class StudyComponent implements OnInit, OnDestroy {
         this.tts.speak(card.word.hanzi, this.ttsRate());
       }
     } else if (this.isRevealed()) {
-      if (event.key === '1' || event.key === 'ArrowLeft') {
-        this.submitScore('cross');
-      } else if (event.key === '2' || event.key === 'ArrowDown') {
-        this.submitScore('triangle');
-      } else if (event.key === '3' || event.key === 'ArrowRight') {
-        this.submitScore('circle');
+      if (event.key === '1') {
+        this.submitScore('madamada');
+      } else if (event.key === '2') {
+        this.submitScore('nantonaku');
+      } else if (event.key === '3') {
+        this.submitScore('oboeta');
+      } else if (event.key === '4') {
+        this.submitScore('daijobu');
       }
     }
   }

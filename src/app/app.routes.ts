@@ -22,6 +22,11 @@ export const routes: Routes = [
       import('./pages/words/words.component').then((m) => m.WordsComponent),
   },
   {
+    path: 'stats/:mode/:level',
+    loadComponent: () =>
+      import('./pages/stats/stats.component').then((m) => m.StatsComponent),
+  },
+  {
     path: '**',
     redirectTo: '',
   },

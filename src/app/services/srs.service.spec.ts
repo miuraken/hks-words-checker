@@ -17,37 +17,49 @@ describe('SrsService', () => {
     service = new SrsService();
   });
 
-  it('archives a word after 3 consecutive circle answers', () => {
+  it('archives a word after 3 consecutive oboeta answers', () => {
     const t0 = 1_700_000_000_000;
-    const p1 = service.calculateNextProgress(sampleWord, 'tone', null, 'circle', t0);
+    const p1 = service.calculateNextProgress(sampleWord, 'tone', null, 'oboeta', t0);
     expect(p1.streak).toBe(1);
     expect(p1.status).toBe('learning');
     expect(p1.nextReviewAt).toBe(t0 + 24 * 60 * 60 * 1000);
 
-    const p2 = service.calculateNextProgress(sampleWord, 'tone', p1, 'circle', t0 + 1000);
+    const p2 = service.calculateNextProgress(sampleWord, 'tone', p1, 'oboeta', t0 + 1000);
     expect(p2.streak).toBe(2);
     expect(p2.status).toBe('learning');
     expect(p2.nextReviewAt).toBe(t0 + 1000 + 3 * 24 * 60 * 60 * 1000);
 
-    const p3 = service.calculateNextProgress(sampleWord, 'tone', p2, 'circle', t0 + 2000);
+    const p3 = service.calculateNextProgress(sampleWord, 'tone', p2, 'oboeta', t0 + 2000);
     expect(p3.streak).toBe(3);
     expect(p3.status).toBe('archived');
     expect(p3.nextReviewAt).toBeNull();
     expect(p3.archivedAt).toBe(t0 + 2000);
   });
 
-  it('resets streak on triangle or cross', () => {
+  it('archives immediately on daijobu', () => {
     const t0 = 1_700_000_000_000;
-    const p1 = service.calculateNextProgress(sampleWord, 'audio', null, 'circle', t0);
+    const p = service.calculateNextProgress(sampleWord, 'tone', null, 'daijobu', t0);
+    expect(p.streak).toBe(3);
+    expect(p.status).toBe('archived');
+    expect(p.nextReviewAt).toBeNull();
+    expect(p.archivedAt).toBe(t0);
+    expect(p.lastResult).toBe('daijobu');
+  });
+
+  it('resets streak on nantonaku (6h) and madamada (1m)', () => {
+    const t0 = 1_700_000_000_000;
+    const p1 = service.calculateNextProgress(sampleWord, 'audio', null, 'oboeta', t0);
     expect(p1.streak).toBe(1);
 
-    const pTri = service.calculateNextProgress(sampleWord, 'audio', p1, 'triangle', t0 + 5000);
-    expect(pTri.streak).toBe(0);
-    expect(pTri.status).toBe('learning');
+    const pNanto = service.calculateNextProgress(sampleWord, 'audio', p1, 'nantonaku', t0 + 5000);
+    expect(pNanto.streak).toBe(0);
+    expect(pNanto.status).toBe('learning');
+    expect(pNanto.nextReviewAt).toBe(t0 + 5000 + 6 * 60 * 60 * 1000);
 
-    const pCross = service.calculateNextProgress(sampleWord, 'audio', p1, 'cross', t0 + 5000);
-    expect(pCross.streak).toBe(0);
-    expect(pCross.status).toBe('learning');
+    const pMada = service.calculateNextProgress(sampleWord, 'audio', p1, 'madamada', t0 + 5000);
+    expect(pMada.streak).toBe(0);
+    expect(pMada.status).toBe('learning');
+    expect(pMada.nextReviewAt).toBe(t0 + 5000 + 60 * 1000);
   });
 
   it('prioritizes due learning words before new words and excludes archived words', () => {
@@ -67,7 +79,7 @@ describe('SrsService', () => {
           streak: 3,
           totalAttempts: 3,
           correctCount: 3,
-          lastResult: 'circle' as const,
+          lastResult: 'daijobu' as const,
           lastTestedAt: now - 1000,
           nextReviewAt: null,
           archivedAt: now - 1000,
@@ -83,9 +95,9 @@ describe('SrsService', () => {
           streak: 1,
           totalAttempts: 1,
           correctCount: 1,
-          lastResult: 'circle' as const,
+          lastResult: 'oboeta' as const,
           lastTestedAt: now - 10000,
-          nextReviewAt: now - 100, // due
+          nextReviewAt: now - 100,
           archivedAt: null,
         },
       ],

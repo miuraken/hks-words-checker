@@ -2,7 +2,24 @@ export type HskLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
 export type StudyMode = 'tone' | 'audio';
 
-export type SelfScore = 'circle' | 'triangle' | 'cross';
+/**
+ * 自己採点の4選択肢
+ * - madamada: まだまだ（旧 cross）
+ * - nantonaku: なんとなく（旧 triangle）
+ * - oboeta: 覚えた（旧 circle）
+ * - daijobu: もう大丈夫（今後出題しない・即アーカイブ）
+ * 後方互換のため旧値も許容する
+ */
+export type SelfScore =
+  | 'madamada'
+  | 'nantonaku'
+  | 'oboeta'
+  | 'daijobu'
+  | 'cross'
+  | 'triangle'
+  | 'circle';
+
+export type NormalizedScore = 'madamada' | 'nantonaku' | 'oboeta' | 'daijobu';
 
 export type WordStatus = 'new' | 'learning' | 'archived';
 
@@ -36,6 +53,17 @@ export interface LevelSummary {
   learning: number;
   dueNow: number;
   unseen: number;
+  madamada: number;
+  nantonaku: number;
+  oboeta: number;
+}
+
+export interface DailyStatSnapshot {
+  date: string; // YYYY-MM-DD
+  madamada: number;
+  nantonaku: number;
+  oboeta: number;
+  daijobu: number;
 }
 
 export interface SessionCard {
