@@ -14,6 +14,24 @@ export const HSK_LEVEL_TOTALS: Record<HskLevel, number> = {
 
 const VOCAB_DATA_VERSION = '20261126_2';
 
+/**
+ * 関連語検索で無視する頻出接頭語・接尾語・助詞
+ */
+const IGNORED_RELATED_CHARS = new Set([
+  '不',
+  '子',
+  '一',
+  '儿',
+  '的',
+  '了',
+  '吗',
+  '呢',
+  '吧',
+  '啊',
+  '们',
+  '么',
+]);
+
 @Injectable({ providedIn: 'root' })
 export class VocabularyService {
   private readonly http = inject(HttpClient);
@@ -30,5 +48,71 @@ export class VocabularyService {
     );
     this.cache.set(level, words);
     return words;
+  }
+
+  /**
+   * 1級 〜 min(6, level + 2) 級までの単語を先読みし、関連語検索に備える
+   */
+  async preloadUpToLevel(maxLevel: HskLevel): Promise<void> {
+    const levels: HskLevel[] = [];
+    for (let lv = 1; lv <= maxLevel; lv++) {
+      levels.push(lv as HskLevel);
+    }
+    await Promise.all(levels.map((lv) => this.getLevelWords(lv)));
+  }
+
+  /**
+   * 対象単語と同じ漢字（接頭語・接尾語等を除く）を持つ関連語句を
+   * 1級〜min(6, target.level + 2) 級から抽出する
+   */
+  findRelatedWords(
+    target: VocabWord,
+    limit: number = 6,
+  ): VocabWord[] {
+    const targetChars = Array.from(
+      new Set(
+        Array.from(target.hanzi).filter(
+          (ch) => /[\u4e00-\u9fff]/.test(ch) && !IGNORED_RELATED_CHARS.has(ch),
+        ),
+      ),
+    );
+
+    if (targetChars.length === 0) return [];
+
+    const maxLevel = Math.min(6, target.level + 2) as HskLevel;
+    const candidates: { word: VocabWord; matchCount: number; levelDiff: number }[] = [];
+    const seenHanzi = new Set<string>([target.hanzi]);
+
+    for (let lv = 1; lv <= maxLevel; lv++) {
+      const words = this.cache.get(lv as HskLevel);
+      if (!words) continue;
+
+      for (const w of words) {
+        if (w.id === target.id || seenHanzi.has(w.hanzi)) continue;
+
+        let matchCount = 0;
+        for (const ch of targetChars) {
+          if (w.hanzi.includes(ch)) {
+            matchCount++;
+          }
+        }
+        if (matchCount > 0) {
+          seenHanzi.add(w.hanzi);
+          candidates.push({
+            word: w,
+            matchCount,
+            levelDiff: Math.abs(w.level - target.level),
+          });
+        }
+      }
+    }
+
+    candidates.sort((a, b) => {
+      if (b.matchCount !== a.matchCount) return b.matchCount - a.matchCount;
+      if (a.levelDiff !== b.levelDiff) return a.levelDiff - b.levelDiff;
+      return a.word.level - b.word.level;
+    });
+
+    return candidates.slice(0, limit).map((c) => c.word);
   }
 }

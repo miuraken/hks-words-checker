@@ -201,6 +201,32 @@ import { VocabularyService } from '../../services/vocabulary.service';
                       発音を聞く
                     </button>
                   </div>
+                  @if (relatedWords().length > 0) {
+                    <div
+                      class="related-section"
+                      (click)="$event.stopPropagation()"
+                    >
+                      <div class="related-title">
+                        関連語句（〜{{ Math.min(6, level() + 2) }}級）
+                      </div>
+                      <div class="related-list">
+                        @for (rw of relatedWords(); track rw.id) {
+                          <button
+                            type="button"
+                            class="related-item"
+                            (click)="playAudio($event, rw)"
+                          >
+                            <span class="rel-lv">{{ rw.level }}級</span>
+                            <span class="rel-hanzi hanzi-font">{{
+                              rw.hanzi
+                            }}</span>
+                            <span class="rel-pinyin">{{ rw.pinyin }}</span>
+                            <span class="rel-meaning">{{ rw.meaning }}</span>
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
                 } @else {
                   <p class="tap-hint">タップしてピンイン・声調を確認</p>
                 }
@@ -454,6 +480,59 @@ import { VocabularyService } from '../../services/vocabulary.service';
         gap: 6px;
       }
     }
+    .related-section {
+      width: 100%;
+      margin-top: 8px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border-color);
+      text-align: left;
+    }
+    .related-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .related-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .related-item {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 6px;
+      width: 100%;
+      padding: 5px 8px;
+      border: none;
+      border-radius: 8px;
+      background: var(--surface-subtle);
+      color: var(--text-primary);
+      font-size: 0.78rem;
+      text-align: left;
+      cursor: pointer;
+      &:hover {
+        opacity: 0.85;
+      }
+    }
+    .rel-lv {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .rel-hanzi {
+      font-weight: 700;
+      font-size: 0.86rem;
+    }
+    .rel-pinyin {
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+    .rel-meaning {
+      color: var(--text-secondary);
+      font-size: 0.74rem;
+    }
     .bottom-actions {
       padding-bottom: env(safe-area-inset-bottom, 8px);
     }
@@ -625,6 +704,7 @@ export class StudyComponent implements OnInit, OnDestroy {
   readonly madamadaCount = signal(0);
   readonly archivedInSession = signal(0);
   readonly bookmarks = signal<Set<string>>(new Set());
+  readonly relatedWordsReady = signal(false);
 
   private allWords: VocabWord[] = [];
   private progressMap = new Map<string, WordProgress>();
@@ -632,6 +712,15 @@ export class StudyComponent implements OnInit, OnDestroy {
   readonly currentCard = computed(
     () => this.queue()[this.currentIndex()] ?? null,
   );
+
+  readonly relatedWords = computed(() => {
+    if (this.mode() !== 'tone' || !this.isRevealed() || !this.relatedWordsReady()) {
+      return [];
+    }
+    const card = this.currentCard();
+    if (!card) return [];
+    return this.vocab.findRelatedWords(card.word, 6);
+  });
 
   async ngOnInit(): Promise<void> {
     const modeParam = this.route.snapshot.paramMap.get('mode');
@@ -661,6 +750,13 @@ export class StudyComponent implements OnInit, OnDestroy {
       this.progressMap = progMap;
       this.bookmarks.set(bms);
       this.startSession(includeAhead);
+
+      if (this.mode() === 'tone') {
+        const maxLv = Math.min(6, this.level() + 2) as HskLevel;
+        this.vocab.preloadUpToLevel(maxLv).then(() => {
+          this.relatedWordsReady.set(true);
+        });
+      }
     } finally {
       this.loading.set(false);
     }
