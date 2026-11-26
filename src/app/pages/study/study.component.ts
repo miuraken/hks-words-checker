@@ -18,12 +18,22 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import {
   HskLevel,
+  NormalizedScore,
   SelfScore,
   SessionCard,
   StudyMode,
   VocabWord,
   WordProgress,
 } from '../../models/vocab.model';
+
+interface AnswerHistoryEntry {
+  index: number;
+  word: VocabWord;
+  prevProgress: WordProgress | null;
+  appliedScore: NormalizedScore;
+  wasArchivedIncremented: boolean;
+  previousQueue: SessionCard[];
+}
 import {
   AnalyticsService,
   AudioTriggerSource,
@@ -145,6 +155,11 @@ import { VocabularyService } from '../../services/vocabulary.service';
             >
               続けて次のセットへ
             </button>
+            @if (canGoBack()) {
+              <button mat-stroked-button (click)="goPrevious()">
+                直前の設問をやり直す
+              </button>
+            }
             <button mat-stroked-button (click)="goHome()">ホームへ戻る</button>
           </div>
         </mat-card>
@@ -271,14 +286,26 @@ import { VocabularyService } from '../../services/vocabulary.service';
 
         <footer class="bottom-actions">
           @if (!isRevealed()) {
-            <button
-              mat-flat-button
-              color="primary"
-              class="reveal-btn"
-              (click)="revealAnswer()"
-            >
-              答えを見る
-            </button>
+            <div class="reveal-row">
+              <button
+                mat-stroked-button
+                type="button"
+                class="prev-btn"
+                [disabled]="!canGoBack()"
+                (click)="goPrevious()"
+                aria-label="前の設問に戻る"
+              >
+                &lt;
+              </button>
+              <button
+                mat-flat-button
+                color="primary"
+                class="reveal-btn"
+                (click)="revealAnswer()"
+              >
+                答えを見る
+              </button>
+            </div>
           } @else {
             <div class="score-buttons">
               <button
@@ -545,8 +572,23 @@ import { VocabularyService } from '../../services/vocabulary.service';
     .bottom-actions {
       padding-bottom: env(safe-area-inset-bottom, 8px);
     }
+    .reveal-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .prev-btn {
+      min-width: 48px;
+      width: 48px;
+      height: 54px;
+      padding: 0;
+      font-size: 1.2rem;
+      font-weight: 700;
+      border-radius: 16px;
+      flex-shrink: 0;
+    }
     .reveal-btn {
-      width: 100%;
+      flex: 1;
       height: 54px;
       font-size: 1.05rem;
       border-radius: 16px;
@@ -715,6 +757,8 @@ export class StudyComponent implements OnInit, OnDestroy {
   readonly archivedInSession = signal(0);
   readonly bookmarks = signal<Set<string>>(new Set());
   readonly relatedWordsReady = signal(false);
+  private readonly answerHistory = signal<AnswerHistoryEntry[]>([]);
+  readonly canGoBack = computed(() => this.answerHistory().length > 0);
 
   private allWords: VocabWord[] = [];
   private progressMap = new Map<string, WordProgress>();
@@ -789,6 +833,7 @@ export class StudyComponent implements OnInit, OnDestroy {
     this.nantonakuCount.set(0);
     this.madamadaCount.set(0);
     this.archivedInSession.set(0);
+    this.answerHistory.set([]);
 
     if (selected.length > 0 && this.mode() === 'audio') {
       const firstWord = selected[0].word;
@@ -856,22 +901,37 @@ export class StudyComponent implements OnInit, OnDestroy {
     const card = this.currentCard();
     if (!card) return;
 
-    if (score === 'daijobu') this.daijobuCount.update((c) => c + 1);
-    else if (score === 'oboeta' || score === 'circle')
-      this.oboetaCount.update((c) => c + 1);
-    else if (score === 'nantonaku' || score === 'triangle')
-      this.nantonakuCount.update((c) => c + 1);
+    const norm = normalizeScore(score);
+    const prevQueue = [...this.queue()];
+    const prevProgress = card.progress ? { ...card.progress } : null;
+
+    if (norm === 'daijobu') this.daijobuCount.update((c) => c + 1);
+    else if (norm === 'oboeta') this.oboetaCount.update((c) => c + 1);
+    else if (norm === 'nantonaku') this.nantonakuCount.update((c) => c + 1);
     else this.madamadaCount.update((c) => c + 1);
 
     const updated = this.srs.calculateNextProgress(
       card.word,
       this.mode(),
-      card.progress,
+      prevProgress,
       score,
     );
 
+    const wasArchivedIncremented = updated.status === 'archived';
+    this.answerHistory.update((h) => [
+      ...h,
+      {
+        index: this.currentIndex(),
+        word: card.word,
+        prevProgress,
+        appliedScore: norm,
+        wasArchivedIncremented,
+        previousQueue: prevQueue,
+      },
+    ]);
+
     this.analytics.trackSubmitScore({
-      score: normalizeScore(score),
+      score: norm,
       mode: this.mode(),
       level: this.level(),
       wordId: card.word.id,
@@ -933,9 +993,79 @@ export class StudyComponent implements OnInit, OnDestroy {
     }
   }
 
+  goPrevious(): void {
+    const hist = this.answerHistory();
+    if (hist.length === 0) return;
+
+    const last = hist[hist.length - 1];
+    this.answerHistory.set(hist.slice(0, -1));
+
+    if (last.appliedScore === 'daijobu') {
+      this.daijobuCount.update((c) => Math.max(0, c - 1));
+    } else if (last.appliedScore === 'oboeta') {
+      this.oboetaCount.update((c) => Math.max(0, c - 1));
+    } else if (last.appliedScore === 'nantonaku') {
+      this.nantonakuCount.update((c) => Math.max(0, c - 1));
+    } else {
+      this.madamadaCount.update((c) => Math.max(0, c - 1));
+    }
+
+    if (last.wasArchivedIncremented) {
+      this.archivedInSession.update((c) => Math.max(0, c - 1));
+    }
+
+    if (last.prevProgress) {
+      this.progressMap.set(last.word.id, last.prevProgress);
+      this.fb.saveProgress(last.prevProgress).catch(() => {
+        this.snackBar.open('前回の記録の復元に失敗しました', '閉じる', {
+          duration: 3000,
+        });
+      });
+    } else {
+      this.progressMap.delete(last.word.id);
+      this.fb
+        .resetWordProgress(this.mode(), this.level(), last.word.id)
+        .catch(() => {
+          this.snackBar.open('前回の記録の取り消しに失敗しました', '閉じる', {
+            duration: 3000,
+          });
+        });
+    }
+
+    this.queue.set(last.previousQueue);
+    this.sessionFinished.set(false);
+    this.currentIndex.set(last.index);
+    this.isRevealed.set(false);
+    this.tts.stop();
+
+    if (this.mode() === 'audio') {
+      this.tts.speak(last.word.hanzi, this.ttsRate());
+      this.analytics.trackPlayAudio({
+        source: 'auto',
+        rate: this.ttsRate(),
+        mode: this.mode(),
+        level: this.level(),
+        wordId: last.word.id,
+        hanzi: last.word.hanzi,
+      });
+    }
+  }
+
   @HostListener('window:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent): void {
-    if (this.loading() || this.sessionFinished() || !this.currentCard()) return;
+    if (this.loading()) return;
+
+    if (
+      (event.key === 'Backspace' || event.key === 'ArrowLeft') &&
+      !this.isRevealed() &&
+      this.canGoBack()
+    ) {
+      event.preventDefault();
+      this.goPrevious();
+      return;
+    }
+
+    if (this.sessionFinished() || !this.currentCard()) return;
 
     if (event.key === ' ' || event.key === 'Enter') {
       if (!this.isRevealed()) {
