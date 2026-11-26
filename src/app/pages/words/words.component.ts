@@ -19,6 +19,7 @@ import {
   WordProgress,
   WordStatus,
 } from '../../models/vocab.model';
+import { AnalyticsService } from '../../services/analytics.service';
 import { FirebaseService } from '../../services/firebase.service';
 import { TtsService } from '../../services/tts.service';
 import { VocabularyService } from '../../services/vocabulary.service';
@@ -135,7 +136,7 @@ interface WordRow {
                 ></mat-checkbox>
                 <button
                   mat-icon-button
-                  (click)="tts.speak(row.word.hanzi)"
+                  (click)="onPlayWordAudio(row.word)"
                   aria-label="発音を聞く"
                   matTooltip="発音を聞く"
                 >
@@ -281,6 +282,7 @@ export class WordsComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FirebaseService);
   private readonly vocab = inject(VocabularyService);
+  private readonly analytics = inject(AnalyticsService);
   private readonly snackBar = inject(MatSnackBar);
   readonly tts = inject(TtsService);
 
@@ -347,12 +349,32 @@ export class WordsComponent implements OnInit {
     }
   }
 
+  onPlayWordAudio(word: VocabWord): void {
+    this.tts.speak(word.hanzi);
+    this.analytics.trackPlayAudio({
+      source: 'words_list',
+      rate: 1.0,
+      mode: this.mode(),
+      level: this.level(),
+      wordId: word.id,
+      hanzi: word.hanzi,
+    });
+  }
+
   async onToggleBookmark(row: WordRow, checked: boolean): Promise<void> {
     this.rows.update((list) =>
       list.map((r) =>
         r.word.id === row.word.id ? { ...r, bookmarked: checked } : r,
       ),
     );
+    this.analytics.trackToggleBookmark({
+      bookmarked: checked,
+      source: 'words',
+      mode: this.mode(),
+      level: this.level(),
+      wordId: row.word.id,
+      hanzi: row.word.hanzi,
+    });
     await this.fb.setBookmark(this.mode(), this.level(), row.word.id, checked);
   }
 

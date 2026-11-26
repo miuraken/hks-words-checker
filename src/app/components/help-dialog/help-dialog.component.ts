@@ -24,8 +24,8 @@ import { MatIconModule } from '@angular/material/icon';
           ① 声調特訓モード
         </h3>
         <p>
-          <strong>目的：</strong>漢字と意味を見て、ピンインと声調を正確に思い浮かべる力を鍛えます。<br />
-          解答画面では発音の確認や、同じ漢字を含む関連語句（〜N+2級）もあわせて復習できます。
+          <strong>目的：</strong>漢字を見て、声調を含むピンインを正確に思い浮かべる力を鍛えます。<br />
+          解答画面では発音の確認や、同じ漢字を含む関連語句もあわせて復習できます。
         </p>
       </section>
 
@@ -35,7 +35,7 @@ import { MatIconModule } from '@angular/material/icon';
           ② 音→概念モード
         </h3>
         <p>
-          <strong>目的：</strong>ピンインと中国語音声（TTS）から、漢字と意味を即座に結びつける聴解力を鍛えます。<br />
+          <strong>目的：</strong>読み上げられた中国語音声とピンインから、意味と漢字を即座に結びつける聴解力を鍛えます。<br />
           読み上げ速度の切り替え（<code>1.0x</code> / <code>0.8x</code>）にも対応しています。
         </p>
       </section>

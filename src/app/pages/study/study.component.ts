@@ -24,8 +24,16 @@ import {
   VocabWord,
   WordProgress,
 } from '../../models/vocab.model';
+import {
+  AnalyticsService,
+  AudioTriggerSource,
+} from '../../services/analytics.service';
 import { FirebaseService } from '../../services/firebase.service';
-import { DEFAULT_SESSION_SIZE, SrsService } from '../../services/srs.service';
+import {
+  DEFAULT_SESSION_SIZE,
+  SrsService,
+  normalizeScore,
+} from '../../services/srs.service';
 import { TtsService } from '../../services/tts.service';
 import { VocabularyService } from '../../services/vocabulary.service';
 
@@ -164,7 +172,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
                 <mat-checkbox
                   class="bookmark-cb"
                   [checked]="bookmarks().has(card.word.id)"
-                  (change)="onToggleBookmark(card.word.id, $event.checked)"
+                  (change)="onToggleBookmark(card.word, $event.checked)"
                 >
                   ブックマーク
                 </mat-checkbox>
@@ -191,31 +199,31 @@ import { VocabularyService } from '../../services/vocabulary.service';
                   <div class="answer-divider"></div>
                   <div class="answer-block">
                     <div class="pinyin-answer">{{ card.word.pinyin }}</div>
-                    <button
-                      mat-stroked-button
-                      type="button"
-                      class="speak-btn"
-                      (click)="playAudio($event, card.word)"
-                    >
-                      <mat-icon>volume_up</mat-icon>
-                      発音を聞く
-                    </button>
-                  </div>
-                  @if (relatedWords().length > 0) {
-                    <div
-                      class="related-section"
-                      (click)="$event.stopPropagation()"
-                    >
-                      <div class="related-title">
-                        関連語句（〜{{ Math.min(6, level() + 2) }}級）
-                      </div>
-                      <div class="related-list">
-                        @for (rw of relatedWords(); track rw.id) {
-                          <button
-                            type="button"
-                            class="related-item"
-                            (click)="playAudio($event, rw)"
-                          >
+                      <button
+                        mat-stroked-button
+                        type="button"
+                        class="speak-btn"
+                        (click)="playAudio($event, card.word, 'study_card')"
+                      >
+                        <mat-icon>volume_up</mat-icon>
+                        発音を聞く
+                      </button>
+                    </div>
+                    @if (relatedWords().length > 0) {
+                      <div
+                        class="related-section"
+                        (click)="$event.stopPropagation()"
+                      >
+                        <div class="related-title">
+                          関連語句（〜{{ Math.min(6, level() + 2) }}級）
+                        </div>
+                        <div class="related-list">
+                          @for (rw of relatedWords(); track rw.id) {
+                            <button
+                              type="button"
+                              class="related-item"
+                              (click)="playAudio($event, rw, 'related_word')"
+                            >
                             <span class="rel-lv">{{ rw.level }}級</span>
                             <span class="rel-hanzi hanzi-font">{{
                               rw.hanzi
@@ -239,7 +247,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
                   mat-stroked-button
                   type="button"
                   class="speak-btn"
-                  (click)="playAudio($event, card.word)"
+                  (click)="playAudio($event, card.word, 'study_card')"
                 >
                   <mat-icon>volume_up</mat-icon>
                   {{ tts.isSpeaking() ? '再生中...' : 'もう一度聞く' }}
@@ -685,6 +693,7 @@ export class StudyComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FirebaseService);
   private readonly vocab = inject(VocabularyService);
   private readonly srs = inject(SrsService);
+  private readonly analytics = inject(AnalyticsService);
   private readonly snackBar = inject(MatSnackBar);
   readonly tts = inject(TtsService);
   readonly Math = Math;
@@ -781,19 +790,49 @@ export class StudyComponent implements OnInit, OnDestroy {
     this.archivedInSession.set(0);
 
     if (selected.length > 0 && this.mode() === 'audio') {
-      this.tts.speak(selected[0].word.hanzi, this.ttsRate());
+      const firstWord = selected[0].word;
+      this.tts.speak(firstWord.hanzi, this.ttsRate());
+      this.analytics.trackPlayAudio({
+        source: 'auto',
+        rate: this.ttsRate(),
+        mode: this.mode(),
+        level: this.level(),
+        wordId: firstWord.id,
+        hanzi: firstWord.hanzi,
+      });
     }
   }
 
   revealAnswer(): void {
     if (!this.isRevealed()) {
       this.isRevealed.set(true);
+      const card = this.currentCard();
+      if (card) {
+        this.analytics.trackRevealAnswer({
+          mode: this.mode(),
+          level: this.level(),
+          wordId: card.word.id,
+          hanzi: card.word.hanzi,
+        });
+      }
     }
   }
 
-  playAudio(event: Event, word: VocabWord): void {
+  playAudio(
+    event: Event,
+    word: VocabWord,
+    source: AudioTriggerSource = 'study_card',
+  ): void {
     event.stopPropagation();
     this.tts.speak(word.hanzi, this.ttsRate());
+    this.analytics.trackPlayAudio({
+      source,
+      rate: this.ttsRate(),
+      mode: this.mode(),
+      level: word.level,
+      wordId: word.id,
+      hanzi: word.hanzi,
+    });
   }
 
   toggleRate(): void {
@@ -801,6 +840,14 @@ export class StudyComponent implements OnInit, OnDestroy {
     const card = this.currentCard();
     if (card && this.mode() === 'audio') {
       this.tts.speak(card.word.hanzi, this.ttsRate());
+      this.analytics.trackPlayAudio({
+        source: 'study_card',
+        rate: this.ttsRate(),
+        mode: this.mode(),
+        level: this.level(),
+        wordId: card.word.id,
+        hanzi: card.word.hanzi,
+      });
     }
   }
 
@@ -821,6 +868,15 @@ export class StudyComponent implements OnInit, OnDestroy {
       card.progress,
       score,
     );
+
+    this.analytics.trackSubmitScore({
+      score: normalizeScore(score),
+      mode: this.mode(),
+      level: this.level(),
+      wordId: card.word.id,
+      hanzi: card.word.hanzi,
+      streak: updated.streak,
+    });
 
     this.progressMap.set(card.word.id, updated);
 
@@ -862,7 +918,16 @@ export class StudyComponent implements OnInit, OnDestroy {
       this.isRevealed.set(false);
       if (this.mode() === 'audio') {
         // モバイル自動再生制限対策: クリックイベント内で同期的に呼び出す
-        this.tts.speak(nextQueue[nextIdx].word.hanzi, this.ttsRate());
+        const nextWord = nextQueue[nextIdx].word;
+        this.tts.speak(nextWord.hanzi, this.ttsRate());
+        this.analytics.trackPlayAudio({
+          source: 'auto',
+          rate: this.ttsRate(),
+          mode: this.mode(),
+          level: this.level(),
+          wordId: nextWord.id,
+          hanzi: nextWord.hanzi,
+        });
       }
     }
   }
@@ -880,6 +945,14 @@ export class StudyComponent implements OnInit, OnDestroy {
       const card = this.currentCard();
       if (card) {
         this.tts.speak(card.word.hanzi, this.ttsRate());
+        this.analytics.trackPlayAudio({
+          source: 'shortcut',
+          rate: this.ttsRate(),
+          mode: this.mode(),
+          level: this.level(),
+          wordId: card.word.id,
+          hanzi: card.word.hanzi,
+        });
       }
     } else if (this.isRevealed()) {
       if (event.key === '1') {
@@ -894,15 +967,23 @@ export class StudyComponent implements OnInit, OnDestroy {
     }
   }
 
-  onToggleBookmark(wordId: string, checked: boolean): void {
+  onToggleBookmark(word: VocabWord, checked: boolean): void {
     const next = new Set(this.bookmarks());
     if (checked) {
-      next.add(wordId);
+      next.add(word.id);
     } else {
-      next.delete(wordId);
+      next.delete(word.id);
     }
     this.bookmarks.set(next);
-    this.fb.setBookmark(this.mode(), this.level(), wordId, checked).catch(() => {
+    this.analytics.trackToggleBookmark({
+      bookmarked: checked,
+      source: 'study',
+      mode: this.mode(),
+      level: this.level(),
+      wordId: word.id,
+      hanzi: word.hanzi,
+    });
+    this.fb.setBookmark(this.mode(), this.level(), word.id, checked).catch(() => {
       this.snackBar.open('ブックマークの保存に失敗しました', '閉じる', {
         duration: 2500,
       });
