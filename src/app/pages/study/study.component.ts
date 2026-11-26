@@ -181,7 +181,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
                   <div class="answer-block">
                     <div class="pinyin-answer">{{ card.word.pinyin }}</div>
                     <button
-                      mat-tonal-button
+                      mat-stroked-button
                       type="button"
                       class="speak-btn"
                       (click)="playAudio($event, card.word)"
@@ -199,7 +199,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
                   {{ card.word.pinyin }}
                 </div>
                 <button
-                  mat-tonal-button
+                  mat-stroked-button
                   type="button"
                   class="speak-btn"
                   (click)="playAudio($event, card.word)"
@@ -428,6 +428,11 @@ import { VocabularyService } from '../../services/vocabulary.service';
     .speak-btn {
       margin-top: 4px;
       border-radius: 999px;
+      ::ng-deep .mdc-button__label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
     }
     .bottom-actions {
       padding-bottom: env(safe-area-inset-bottom, 8px);
