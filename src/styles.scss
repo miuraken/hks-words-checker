@@ -36,6 +36,11 @@
   --pill-daijobu-bg: #e6f4ea;
   --pill-daijobu-fg: #0d652d;
 
+  --bar-daijobu: #7dd399;
+  --bar-oboeta: #7ac7c7;
+  --bar-nantonaku: #ffcc7a;
+  --bar-madamada: #f49b94;
+
   @include mat.theme((
     color: (
       theme-type: light,
@@ -85,6 +90,11 @@
   --pill-oboeta-fg: #80e5e5;
   --pill-daijobu-bg: #13381f;
   --pill-daijobu-fg: #94e8ad;
+
+  --bar-daijobu: #2e7d47;
+  --bar-oboeta: #247878;
+  --bar-nantonaku: #9e6b1b;
+  --bar-madamada: #9e3936;
 
   @include mat.theme((
     color: (

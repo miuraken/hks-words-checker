@@ -5,7 +5,6 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -28,7 +27,6 @@ const LEVELS: HskLevel[] = [1, 2, 3, 4, 5, 6];
     MatCardModule,
     MatChipsModule,
     MatIconModule,
-    MatProgressBarModule,
     MatProgressSpinnerModule,
     MatToolbarModule,
     MatTooltipModule,
@@ -118,13 +116,49 @@ const LEVELS: HskLevel[] = [1, 2, 3, 4, 5, 6];
                 </div>
 
                 <div class="progress-wrap">
-                  <mat-progress-bar
-                    mode="determinate"
-                    [value]="(item.archived / item.total) * 100"
-                  />
+                  <div
+                    class="stacked-progress"
+                    role="progressbar"
+                    [attr.aria-valuenow]="item.archived + item.learning"
+                    [attr.aria-valuemax]="item.total"
+                  >
+                    @if (item.archived > 0) {
+                      <div
+                        class="seg seg-daijobu"
+                        [style.width.%]="(item.archived / item.total) * 100"
+                        [matTooltip]="'もう大丈夫: ' + item.archived"
+                      ></div>
+                    }
+                    @if (item.oboeta > 0) {
+                      <div
+                        class="seg seg-oboeta"
+                        [style.width.%]="(item.oboeta / item.total) * 100"
+                        [matTooltip]="'覚えた: ' + item.oboeta"
+                      ></div>
+                    }
+                    @if (item.nantonaku > 0) {
+                      <div
+                        class="seg seg-nantonaku"
+                        [style.width.%]="(item.nantonaku / item.total) * 100"
+                        [matTooltip]="'なんとなく: ' + item.nantonaku"
+                      ></div>
+                    }
+                    @if (item.madamada > 0) {
+                      <div
+                        class="seg seg-madamada"
+                        [style.width.%]="(item.madamada / item.total) * 100"
+                        [matTooltip]="'まだまだ: ' + item.madamada"
+                      ></div>
+                    }
+                  </div>
                   <div class="stats-row">
                     <span>習得済: {{ item.archived }} / {{ item.total }}</span>
-                    <span>学習中: {{ item.learning }}</span>
+                    <span class="breakdown-inline">
+                      <i class="dot daijobu"></i>{{ item.archived }}
+                      <i class="dot oboeta"></i>{{ item.oboeta }}
+                      <i class="dot nantonaku"></i>{{ item.nantonaku }}
+                      <i class="dot madamada"></i>{{ item.madamada }}
+                    </span>
                   </div>
                 </div>
 
@@ -291,11 +325,60 @@ const LEVELS: HskLevel[] = [1, 2, 3, 4, 5, 6];
       flex-direction: column;
       gap: 6px;
     }
+    .stacked-progress {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--surface-subtle);
+      display: flex;
+      overflow: hidden;
+    }
+    .seg {
+      height: 100%;
+      transition: width 0.25s ease;
+    }
+    .seg-daijobu {
+      background: var(--bar-daijobu);
+    }
+    .seg-oboeta {
+      background: var(--bar-oboeta);
+    }
+    .seg-nantonaku {
+      background: var(--bar-nantonaku);
+    }
+    .seg-madamada {
+      background: var(--bar-madamada);
+    }
     .stats-row {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       font-size: 0.8rem;
       color: var(--text-secondary);
+    }
+    .breakdown-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.76rem;
+    }
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      &.daijobu {
+        background: var(--bar-daijobu);
+      }
+      &.oboeta {
+        background: var(--bar-oboeta);
+      }
+      &.nantonaku {
+        background: var(--bar-nantonaku);
+      }
+      &.madamada {
+        background: var(--bar-madamada);
+      }
     }
     .card-actions {
       display: flex;
