@@ -4,11 +4,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { HskLevel, LevelSummary, StudyMode } from '../../models/vocab.model';
+import { HelpDialogComponent } from '../../components/help-dialog/help-dialog.component';
 import { FirebaseService } from '../../services/firebase.service';
 import { SrsService } from '../../services/srs.service';
 import {
@@ -26,6 +28,7 @@ const LEVELS: HskLevel[] = [1, 2, 3, 4, 5, 6];
     MatButtonToggleModule,
     MatCardModule,
     MatChipsModule,
+    MatDialogModule,
     MatIconModule,
     MatProgressSpinnerModule,
     MatToolbarModule,
@@ -35,6 +38,14 @@ const LEVELS: HskLevel[] = [1, 2, 3, 4, 5, 6];
     <mat-toolbar class="top-bar">
       <span class="toolbar-title">HSK 語彙特訓</span>
       <span class="spacer"></span>
+      <button
+        mat-icon-button
+        (click)="openHelpDialog()"
+        aria-label="アプリの説明"
+        matTooltip="アプリの説明"
+      >
+        <mat-icon>help_outline</mat-icon>
+      </button>
       @if (fb.user(); as user) {
         <span class="user-name">{{ user.displayName || '学習中' }}</span>
         <button
@@ -397,6 +408,7 @@ export class HomeComponent implements OnInit {
   private readonly vocab = inject(VocabularyService);
   private readonly srs = inject(SrsService);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
 
   readonly selectedMode = signal<StudyMode>('tone');
   readonly loading = signal(true);
@@ -415,7 +427,22 @@ export class HomeComponent implements OnInit {
   );
 
   async ngOnInit(): Promise<void> {
+    if (
+      typeof localStorage !== 'undefined' &&
+      !localStorage.getItem('hsk_intro_seen_v1')
+    ) {
+      localStorage.setItem('hsk_intro_seen_v1', '1');
+      this.openHelpDialog();
+    }
     await this.refreshSummaries();
+  }
+
+  openHelpDialog(): void {
+    this.dialog.open(HelpDialogComponent, {
+      maxWidth: '520px',
+      width: '92vw',
+      autoFocus: false,
+    });
   }
 
   async onModeChange(mode: StudyMode): Promise<void> {
