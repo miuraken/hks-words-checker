@@ -59,8 +59,8 @@ import { MatIconModule } from '@angular/material/icon';
             モードごとに気になる単語をチェックし、単語一覧からブックマークだけを絞り込めます。
           </li>
           <li>
-            <strong>ゲスト利用 ＆ クラウド同期：</strong>
-            ログインなしでもブラウザに自動保存され、Google ログインすると複数端末間で同期できます。
+            <strong>クラウド同期：</strong>
+            Googleアカウントでログインすると複数端末間で進捗を同期できます。（ログインなしでも利用できます。）
           </li>
         </ul>
       </section>
