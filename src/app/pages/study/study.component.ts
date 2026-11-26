@@ -464,7 +464,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
       .sub {
         font-size: 0.7rem;
         font-weight: 500;
-        opacity: 0.58;
+        opacity: 0.4;
       }
     }
     .madamada-btn {
