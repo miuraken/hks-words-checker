@@ -465,6 +465,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
       animation: fadeIn 0.18s ease-out;
     }
     .pinyin-answer {
+      font-family: 'Roboto', sans-serif;
       font-size: clamp(1.6rem, 6vw, 2.2rem);
       font-weight: 700;
       color: var(--accent-primary);
