@@ -164,8 +164,9 @@ const LEVELS: HskLevel[] = [1, 2, 3, 4, 5, 6];
   `,
   styles: `
     .top-bar {
-      background: #ffffff;
-      border-bottom: 1px solid #e0e3e7;
+      background: var(--surface-bg);
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
       position: sticky;
       top: 0;
       z-index: 10;
@@ -179,7 +180,7 @@ const LEVELS: HskLevel[] = [1, 2, 3, 4, 5, 6];
     }
     .user-name {
       font-size: 0.85rem;
-      color: #5f6368;
+      color: var(--text-secondary);
       margin-right: 4px;
       max-width: 120px;
       overflow: hidden;
@@ -197,8 +198,8 @@ const LEVELS: HskLevel[] = [1, 2, 3, 4, 5, 6];
       gap: 10px;
       padding: 10px 14px;
       border-radius: 12px;
-      background: #e8f4f4;
-      color: #004f4f;
+      background: var(--banner-bg);
+      color: var(--banner-fg);
       font-size: 0.8rem;
       line-height: 1.4;
       mat-icon {
@@ -219,7 +220,7 @@ const LEVELS: HskLevel[] = [1, 2, 3, 4, 5, 6];
       margin: 0 0 10px;
       font-size: 0.9rem;
       font-weight: 600;
-      color: #444746;
+      color: var(--text-secondary);
     }
     .mode-toggle {
       width: 100%;
@@ -235,7 +236,7 @@ const LEVELS: HskLevel[] = [1, 2, 3, 4, 5, 6];
     .mode-desc {
       margin: 8px 0 0;
       font-size: 0.85rem;
-      color: #5f6368;
+      color: var(--text-secondary);
     }
     .loading-box {
       display: flex;
@@ -243,7 +244,7 @@ const LEVELS: HskLevel[] = [1, 2, 3, 4, 5, 6];
       align-items: center;
       padding: 40px 0;
       gap: 12px;
-      color: #5f6368;
+      color: var(--text-secondary);
     }
     .level-grid {
       display: flex;
@@ -253,7 +254,7 @@ const LEVELS: HskLevel[] = [1, 2, 3, 4, 5, 6];
     .level-card {
       padding: 16px;
       border-radius: 16px;
-      background: #ffffff;
+      background: var(--surface-bg);
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -271,15 +272,15 @@ const LEVELS: HskLevel[] = [1, 2, 3, 4, 5, 6];
     .level-badge {
       font-size: 1.15rem;
       font-weight: 700;
-      color: #004f4f;
+      color: var(--accent-heading);
     }
     .total-count {
       font-size: 0.85rem;
-      color: #5f6368;
+      color: var(--text-secondary);
     }
     .due-badge {
-      background: #ffdad6;
-      color: #410002;
+      background: var(--due-bg);
+      color: var(--due-fg);
       font-size: 0.78rem;
       font-weight: 700;
       padding: 3px 10px;
@@ -294,7 +295,7 @@ const LEVELS: HskLevel[] = [1, 2, 3, 4, 5, 6];
       display: flex;
       justify-content: space-between;
       font-size: 0.8rem;
-      color: #5f6368;
+      color: var(--text-secondary);
     }
     .card-actions {
       display: flex;

@@ -152,8 +152,9 @@ interface WordRow {
   `,
   styles: `
     .words-toolbar {
-      background: #ffffff;
-      border-bottom: 1px solid #e0e3e7;
+      background: var(--surface-bg);
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
       position: sticky;
       top: 0;
       z-index: 10;
@@ -181,7 +182,7 @@ interface WordRow {
     .count-label {
       margin: 0;
       font-size: 0.85rem;
-      color: #5f6368;
+      color: var(--text-secondary);
     }
     .word-list {
       display: flex;
@@ -191,7 +192,7 @@ interface WordRow {
     .word-card {
       padding: 12px 14px;
       border-radius: 14px;
-      background: #ffffff;
+      background: var(--surface-bg);
       display: flex;
       flex-direction: row;
       align-items: center;
@@ -216,12 +217,12 @@ interface WordRow {
     }
     .pinyin {
       font-size: 0.95rem;
-      color: #006a6a;
+      color: var(--accent-primary);
       font-weight: 500;
     }
     .meaning {
       font-size: 0.85rem;
-      color: #3c4043;
+      color: var(--text-secondary);
     }
     .badge {
       font-size: 0.7rem;
@@ -229,16 +230,16 @@ interface WordRow {
       border-radius: 999px;
       font-weight: 600;
       &.archived {
-        background: #c4eed0;
-        color: #072711;
+        background: var(--pill-daijobu-bg);
+        color: var(--pill-daijobu-fg);
       }
       &.learning {
-        background: #fef7e0;
-        color: #b06000;
+        background: var(--pill-nantonaku-bg);
+        color: var(--pill-nantonaku-fg);
       }
       &.new {
-        background: #f1f3f4;
-        color: #5f6368;
+        background: var(--surface-subtle);
+        color: var(--text-secondary);
       }
     }
     .word-actions {

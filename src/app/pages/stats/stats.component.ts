@@ -135,7 +135,7 @@ interface ChartBar {
                     [attr.x2]="svgWidth() - padRight"
                     [attr.y1]="tick.y"
                     [attr.y2]="tick.y"
-                    stroke="#e8eaed"
+                    stroke="var(--chart-grid)"
                     stroke-width="1"
                   />
                   <text
@@ -163,7 +163,7 @@ interface ChartBar {
                         [attr.width]="bar.width + 6"
                         [attr.height]="plotHeight + 8"
                         rx="4"
-                        fill="#e8f4f4"
+                        fill="var(--chart-highlight)"
                       />
                     }
 
@@ -243,8 +243,9 @@ interface ChartBar {
   `,
   styles: `
     .stats-toolbar {
-      background: #ffffff;
-      border-bottom: 1px solid #e0e3e7;
+      background: var(--surface-bg);
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
       position: sticky;
       top: 0;
       z-index: 10;
@@ -262,13 +263,13 @@ interface ChartBar {
       align-items: center;
       padding: 48px 0;
       gap: 12px;
-      color: #5f6368;
+      color: var(--text-secondary);
     }
     .summary-card,
     .chart-card {
       padding: 16px;
       border-radius: 18px;
-      background: #ffffff;
+      background: var(--surface-bg);
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -277,7 +278,7 @@ interface ChartBar {
       margin: 0;
       font-size: 0.95rem;
       font-weight: 700;
-      color: #1a1c1e;
+      color: var(--text-primary);
     }
     .current-grid {
       display: grid;
@@ -300,20 +301,20 @@ interface ChartBar {
         font-weight: 600;
       }
       &.madamada {
-        background: #fce8e6;
-        color: #c5221f;
+        background: var(--pill-madamada-bg);
+        color: var(--pill-madamada-fg);
       }
       &.nantonaku {
-        background: #fef7e0;
-        color: #b06000;
+        background: var(--pill-nantonaku-bg);
+        color: var(--pill-nantonaku-fg);
       }
       &.oboeta {
-        background: #e0f2f1;
-        color: #006a6a;
+        background: var(--pill-oboeta-bg);
+        color: var(--pill-oboeta-fg);
       }
       &.daijobu {
-        background: #e6f4ea;
-        color: #0d652d;
+        background: var(--pill-daijobu-bg);
+        color: var(--pill-daijobu-fg);
       }
     }
     .chart-header {
@@ -325,12 +326,12 @@ interface ChartBar {
     }
     .chart-sub {
       font-size: 0.78rem;
-      color: #5f6368;
+      color: var(--text-secondary);
     }
     .empty-chart {
       padding: 32px 12px;
       text-align: center;
-      color: #5f6368;
+      color: var(--text-secondary);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -339,7 +340,7 @@ interface ChartBar {
         font-size: 40px;
         width: 40px;
         height: 40px;
-        color: #9aa0a6;
+        color: var(--text-muted);
       }
       p {
         margin: 0;
@@ -351,7 +352,7 @@ interface ChartBar {
       flex-wrap: wrap;
       gap: 12px;
       font-size: 0.78rem;
-      color: #3c4043;
+      color: var(--text-secondary);
     }
     .leg-item {
       display: inline-flex;
@@ -388,9 +389,9 @@ interface ChartBar {
     }
     .axis-label {
       font-size: 10px;
-      fill: #5f6368;
+      fill: var(--text-secondary);
       &.active-day {
-        fill: #004f4f;
+        fill: var(--accent-heading);
         font-weight: 700;
       }
     }
@@ -399,7 +400,7 @@ interface ChartBar {
       outline: none;
     }
     .detail-box {
-      background: #f8f9fa;
+      background: var(--surface-subtle);
       border-radius: 12px;
       padding: 10px 12px;
       display: flex;
@@ -415,7 +416,7 @@ interface ChartBar {
     .detail-total {
       margin-left: auto;
       font-weight: 600;
-      color: #004f4f;
+      color: var(--accent-heading);
     }
     .detail-counts {
       display: flex;
@@ -425,16 +426,16 @@ interface ChartBar {
       font-weight: 600;
     }
     .c-daijobu {
-      color: #0d652d;
+      color: var(--pill-daijobu-fg);
     }
     .c-oboeta {
-      color: #006a6a;
+      color: var(--pill-oboeta-fg);
     }
     .c-nantonaku {
-      color: #b06000;
+      color: var(--pill-nantonaku-fg);
     }
     .c-madamada {
-      color: #c5221f;
+      color: var(--pill-madamada-fg);
     }
   `,
 })

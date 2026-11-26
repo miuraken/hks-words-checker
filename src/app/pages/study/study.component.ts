@@ -276,8 +276,9 @@ import { VocabularyService } from '../../services/vocabulary.service';
   `,
   styles: `
     .study-toolbar {
-      background: #ffffff;
-      border-bottom: 1px solid #e0e3e7;
+      background: var(--surface-bg);
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
     }
     .toolbar-info {
       display: flex;
@@ -291,7 +292,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
     }
     .toolbar-sub {
       font-size: 0.78rem;
-      color: #5f6368;
+      color: var(--text-secondary);
     }
     .spacer {
       flex: 1;
@@ -327,7 +328,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
       min-height: 340px;
       padding: 20px;
       border-radius: 24px;
-      background: #ffffff;
+      background: var(--surface-bg);
       display: flex;
       flex-direction: column;
       cursor: pointer;
@@ -362,9 +363,9 @@ import { VocabularyService } from '../../services/vocabulary.service';
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      border: 2px solid #006a6a;
+      border: 2px solid var(--accent-primary);
       &.filled {
-        background: #006a6a;
+        background: var(--accent-primary);
       }
     }
     .card-body {
@@ -381,26 +382,26 @@ import { VocabularyService } from '../../services/vocabulary.service';
       font-size: clamp(2.4rem, 11vw, 3.8rem);
       font-weight: 700;
       line-height: 1.25;
-      color: #1a1c1e;
+      color: var(--text-primary);
     }
     .pinyin-prompt {
       font-size: clamp(2rem, 8vw, 3rem);
-      color: #004f4f;
+      color: var(--accent-heading);
     }
     .meaning-prompt {
       font-size: 1.05rem;
-      color: #444746;
+      color: var(--text-secondary);
       line-height: 1.5;
     }
     .tap-hint {
       margin: 12px 0 0;
       font-size: 0.875rem;
-      color: #747775;
+      color: var(--text-muted);
     }
     .answer-divider {
       width: 60%;
       height: 1px;
-      background: #e0e3e7;
+      background: var(--border-color);
     }
     .answer-block {
       display: flex;
@@ -412,16 +413,16 @@ import { VocabularyService } from '../../services/vocabulary.service';
     .pinyin-answer {
       font-size: clamp(1.6rem, 6vw, 2.2rem);
       font-weight: 700;
-      color: #006a6a;
+      color: var(--accent-primary);
     }
     .hanzi-answer {
       font-size: clamp(2.2rem, 9vw, 3.2rem);
       font-weight: 700;
-      color: #1a1c1e;
+      color: var(--text-primary);
     }
     .meaning-answer {
       font-size: 1.15rem;
-      color: #3c4043;
+      color: var(--text-secondary);
       line-height: 1.5;
     }
     .speak-btn {
@@ -462,30 +463,31 @@ import { VocabularyService } from '../../services/vocabulary.service';
       }
       .sub {
         font-size: 0.7rem;
-        opacity: 0.85;
+        font-weight: 500;
+        opacity: 0.58;
       }
     }
     .madamada-btn {
-      background-color: #ffdad6 !important;
-      color: #410002 !important;
+      background-color: var(--btn-madamada-bg) !important;
+      color: var(--btn-madamada-fg) !important;
     }
     .nantonaku-btn {
-      background-color: #ffdea6 !important;
-      color: #271900 !important;
+      background-color: var(--btn-nantonaku-bg) !important;
+      color: var(--btn-nantonaku-fg) !important;
     }
     .oboeta-btn {
-      background-color: #cce8e8 !important;
-      color: #004f4f !important;
+      background-color: var(--btn-oboeta-bg) !important;
+      color: var(--btn-oboeta-fg) !important;
     }
     .daijobu-btn {
-      background-color: #c4eed0 !important;
-      color: #072711 !important;
+      background-color: var(--btn-daijobu-bg) !important;
+      color: var(--btn-daijobu-fg) !important;
     }
     .summary-card {
       margin: auto 0;
       padding: 28px 20px;
       border-radius: 24px;
-      background: #ffffff;
+      background: var(--surface-bg);
       text-align: center;
       display: flex;
       flex-direction: column;
@@ -496,7 +498,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
       }
       p {
         margin: 0;
-        color: #5f6368;
+        color: var(--text-secondary);
         font-size: 0.92rem;
       }
     }
@@ -506,7 +508,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
       height: 56px;
     }
     .done-icon {
-      color: #006a6a;
+      color: var(--accent-primary);
     }
     .result-grid {
       width: 100%;
@@ -531,23 +533,23 @@ import { VocabularyService } from '../../services/vocabulary.service';
       }
     }
     .daijobu-box {
-      background: #e6f4ea;
-      color: #0d652d;
+      background: var(--pill-daijobu-bg);
+      color: var(--pill-daijobu-fg);
     }
     .oboeta-box {
-      background: #e0f2f1;
-      color: #006a6a;
+      background: var(--pill-oboeta-bg);
+      color: var(--pill-oboeta-fg);
     }
     .nantonaku-box {
-      background: #fef7e0;
-      color: #b06000;
+      background: var(--pill-nantonaku-bg);
+      color: var(--pill-nantonaku-fg);
     }
     .madamada-box {
-      background: #fce8e6;
-      color: #c5221f;
+      background: var(--pill-madamada-bg);
+      color: var(--pill-madamada-fg);
     }
     .archived-note {
-      color: #006a6a !important;
+      color: var(--accent-primary) !important;
       font-weight: 500;
     }
     .summary-actions {

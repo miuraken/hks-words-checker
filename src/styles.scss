@@ -1,9 +1,94 @@
 @use '@angular/material' as mat;
 
-html {
+:root {
+  color-scheme: light;
+  --app-bg: #f6f8fa;
+  --surface-bg: #ffffff;
+  --surface-subtle: #f1f3f4;
+  --text-primary: #1a1c1e;
+  --text-secondary: #5f6368;
+  --text-muted: #747775;
+  --border-color: #e0e3e7;
+  --accent-primary: #006a6a;
+  --accent-heading: #004f4f;
+  --banner-bg: #e8f4f4;
+  --banner-fg: #004f4f;
+  --due-bg: #ffdad6;
+  --due-fg: #410002;
+  --chart-grid: #e8eaed;
+  --chart-highlight: #e8f4f4;
+
+  --btn-madamada-bg: #ffdad6;
+  --btn-madamada-fg: #410002;
+  --btn-nantonaku-bg: #ffdea6;
+  --btn-nantonaku-fg: #271900;
+  --btn-oboeta-bg: #cce8e8;
+  --btn-oboeta-fg: #004f4f;
+  --btn-daijobu-bg: #c4eed0;
+  --btn-daijobu-fg: #072711;
+
+  --pill-madamada-bg: #fce8e6;
+  --pill-madamada-fg: #c5221f;
+  --pill-nantonaku-bg: #fef7e0;
+  --pill-nantonaku-fg: #b06000;
+  --pill-oboeta-bg: #e0f2f1;
+  --pill-oboeta-fg: #006a6a;
+  --pill-daijobu-bg: #e6f4ea;
+  --pill-daijobu-fg: #0d652d;
+
   @include mat.theme((
     color: (
       theme-type: light,
+      primary: mat.$cyan-palette,
+      tertiary: mat.$orange-palette,
+    ),
+    typography: (
+      plain-family: 'Noto Sans JP, Roboto, sans-serif',
+      brand-family: 'Noto Sans JP, Roboto, sans-serif',
+    ),
+    density: 0,
+  ));
+}
+
+:root.dark-theme {
+  color-scheme: dark;
+  --app-bg: #111414;
+  --surface-bg: #1b2020;
+  --surface-subtle: #252b2b;
+  --text-primary: #e3e6e6;
+  --text-secondary: #a8b0b0;
+  --text-muted: #8b9393;
+  --border-color: #2f3636;
+  --accent-primary: #4dd0d0;
+  --accent-heading: #80e5e5;
+  --banner-bg: #183030;
+  --banner-fg: #9ce6e6;
+  --due-bg: #5c1c18;
+  --due-fg: #ffdad6;
+  --chart-grid: #2c3333;
+  --chart-highlight: #1f3333;
+
+  --btn-madamada-bg: #5c2220;
+  --btn-madamada-fg: #ffd6d2;
+  --btn-nantonaku-bg: #553b12;
+  --btn-nantonaku-fg: #ffe3b3;
+  --btn-oboeta-bg: #154444;
+  --btn-oboeta-fg: #bdf0f0;
+  --btn-daijobu-bg: #154524;
+  --btn-daijobu-fg: #c1f2cf;
+
+  --pill-madamada-bg: #451c1a;
+  --pill-madamada-fg: #ffb4ab;
+  --pill-nantonaku-bg: #402d0f;
+  --pill-nantonaku-fg: #ffcf86;
+  --pill-oboeta-bg: #143838;
+  --pill-oboeta-fg: #80e5e5;
+  --pill-daijobu-bg: #13381f;
+  --pill-daijobu-fg: #94e8ad;
+
+  @include mat.theme((
+    color: (
+      theme-type: dark,
       primary: mat.$cyan-palette,
       tertiary: mat.$orange-palette,
     ),
@@ -26,10 +111,11 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #f6f8fa;
-  color: #1a1c1e;
+  background-color: var(--app-bg);
+  color: var(--text-primary);
   font-family: 'Noto Sans JP', 'Roboto', sans-serif;
   -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .hanzi-font {

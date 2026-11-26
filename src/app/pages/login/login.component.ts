@@ -85,14 +85,14 @@ import { FirebaseService } from '../../services/firebase.service';
       max-width: 420px;
       padding: 8px;
       border-radius: 20px;
-      background: #ffffff;
+      background: var(--surface-bg);
     }
     .brand-avatar {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #cce8e8;
-      color: #004f4f;
+      background: var(--btn-oboeta-bg);
+      color: var(--btn-oboeta-fg);
       border-radius: 12px;
     }
     .login-content {
@@ -108,7 +108,7 @@ import { FirebaseService } from '../../services/firebase.service';
       p {
         margin: 2px 0 0;
         font-size: 0.85rem;
-        color: #5f6368;
+        color: var(--text-secondary);
       }
     }
     .login-actions {
