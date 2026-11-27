@@ -23,6 +23,22 @@ export type NormalizedScore = 'madamada' | 'nantonaku' | 'oboeta' | 'daijobu';
 
 export type WordStatus = 'new' | 'learning' | 'archived';
 
+export type ToneRuleType =
+  | 'jidaku_nissho'
+  | 'zendaku_nissho'
+  | 'seion_nissho'
+  | 'zendaku_hi_nissho'
+  | 'jidaku_hi_nissho';
+
+export interface ToneHint {
+  char: string;
+  jpChar?: string;
+  reading: string;
+  rule: ToneRuleType;
+  tone: 1 | 2 | 3 | 4;
+  text: string;
+}
+
 export interface VocabWord {
   id: string;
   level: HskLevel;
@@ -30,6 +46,7 @@ export interface VocabWord {
   hanzi: string;
   pinyin: string;
   meaning: string;
+  toneHints?: ToneHint[];
 }
 
 export interface WordProgress {

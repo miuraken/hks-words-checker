@@ -12,7 +12,7 @@ export const HSK_LEVEL_TOTALS: Record<HskLevel, number> = {
   6: 2513,
 };
 
-const VOCAB_DATA_VERSION = '20261126_2';
+const VOCAB_DATA_VERSION = '20261127_1';
 
 /**
  * 関連語検索で無視する頻出接頭語・接尾語・助詞

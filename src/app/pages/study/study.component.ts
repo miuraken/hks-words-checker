@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -22,9 +23,11 @@ import {
   SelfScore,
   SessionCard,
   StudyMode,
+  ToneRuleType,
   VocabWord,
   WordProgress,
 } from '../../models/vocab.model';
+import { ToneRuleDialogComponent } from '../../components/tone-rule-dialog/tone-rule-dialog.component';
 
 interface AnswerHistoryEntry {
   index: number;
@@ -54,6 +57,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
+    MatDialogModule,
     MatIconModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
@@ -224,6 +228,29 @@ import { VocabularyService } from '../../services/vocabulary.service';
                         発音を聞く
                       </button>
                     </div>
+                    @if (card.word.toneHints && card.word.toneHints.length > 0) {
+                      <div
+                        class="tone-hint-box"
+                        (click)="$event.stopPropagation()"
+                      >
+                        <div class="tone-hint-header">
+                          <mat-icon>lightbulb</mat-icon>
+                          <span>音読みからの声調ヒント</span>
+                        </div>
+                        @for (hint of card.word.toneHints; track hint.char) {
+                          <p class="tone-hint-line">
+                            <span>{{ hint.text }}</span>
+                            <button
+                              type="button"
+                              class="tone-hint-detail-link"
+                              (click)="openToneRuleDialog($event, hint.rule)"
+                            >
+                              →詳細
+                            </button>
+                          </p>
+                        }
+                      </div>
+                    }
                     @if (relatedWords().length > 0) {
                       <div
                         class="related-section"
@@ -517,6 +544,46 @@ import { VocabularyService } from '../../services/vocabulary.service';
         gap: 6px;
       }
     }
+    .tone-hint-box {
+      width: 100%;
+      margin-top: 4px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: var(--banner-bg);
+      color: var(--banner-fg);
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .tone-hint-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      mat-icon {
+        font-size: 15px;
+        width: 15px;
+        height: 15px;
+      }
+    }
+    .tone-hint-line {
+      margin: 0;
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+    .tone-hint-detail-link {
+      border: none;
+      background: transparent;
+      color: var(--accent-primary);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0 2px;
+      margin-left: 4px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
     .related-section {
       width: 100%;
       margin-top: 8px;
@@ -738,6 +805,7 @@ export class StudyComponent implements OnInit, OnDestroy {
   private readonly vocab = inject(VocabularyService);
   private readonly srs = inject(SrsService);
   private readonly analytics = inject(AnalyticsService);
+  private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   readonly tts = inject(TtsService);
   readonly Math = Math;
@@ -1119,6 +1187,17 @@ export class StudyComponent implements OnInit, OnDestroy {
       this.snackBar.open('ブックマークの保存に失敗しました', '閉じる', {
         duration: 2500,
       });
+    });
+  }
+
+  openToneRuleDialog(event: Event, highlightRule?: ToneRuleType): void {
+    event.stopPropagation();
+    this.dialog.open(ToneRuleDialogComponent, {
+      maxWidth: '580px',
+      width: '94vw',
+      maxHeight: '85vh',
+      autoFocus: false,
+      data: { highlightRule },
     });
   }
 
