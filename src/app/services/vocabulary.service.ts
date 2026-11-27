@@ -67,7 +67,7 @@ export class VocabularyService {
    */
   findRelatedWords(
     target: VocabWord,
-    limit: number = 6,
+    limit: number = 5,
   ): VocabWord[] {
     const targetChars = Array.from(
       new Set(
@@ -108,6 +108,13 @@ export class VocabularyService {
     }
 
     candidates.sort((a, b) => {
+      // 6件以上になる場合は現在の級より下の級を優先的に除外（より低い級ほど後ろへ）
+      const aLower = a.word.level < target.level ? 1 : 0;
+      const bLower = b.word.level < target.level ? 1 : 0;
+      if (aLower !== bLower) return aLower - bLower;
+      if (aLower === 1 && a.word.level !== b.word.level) {
+        return b.word.level - a.word.level;
+      }
       if (b.matchCount !== a.matchCount) return b.matchCount - a.matchCount;
       if (a.levelDiff !== b.levelDiff) return a.levelDiff - b.levelDiff;
       return a.word.level - b.word.level;

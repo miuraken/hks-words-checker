@@ -228,29 +228,6 @@ import { VocabularyService } from '../../services/vocabulary.service';
                         発音を聞く
                       </button>
                     </div>
-                    @if (card.word.toneHints && card.word.toneHints.length > 0) {
-                      <div
-                        class="tone-hint-box"
-                        (click)="$event.stopPropagation()"
-                      >
-                        <div class="tone-hint-header">
-                          <mat-icon>lightbulb</mat-icon>
-                          <span>音読みからの声調ヒント</span>
-                        </div>
-                        @for (hint of card.word.toneHints; track hint.char) {
-                          <p class="tone-hint-line">
-                            <span>{{ hint.text }}</span>
-                            <button
-                              type="button"
-                              class="tone-hint-detail-link"
-                              (click)="openToneRuleDialog($event, hint.rule)"
-                            >
-                              →詳細
-                            </button>
-                          </p>
-                        }
-                      </div>
-                    }
                     @if (relatedWords().length > 0) {
                       <div
                         class="related-section"
@@ -368,6 +345,30 @@ import { VocabularyService } from '../../services/vocabulary.service';
                 <span class="sub">今後除外</span>
               </button>
             </div>
+            @if (
+              mode() === 'tone' &&
+              card.word.toneHints &&
+              card.word.toneHints.length > 0
+            ) {
+              <div class="tone-hint-box">
+                <div class="tone-hint-header">
+                  <mat-icon>lightbulb</mat-icon>
+                  <span>音読みからの声調ヒント</span>
+                </div>
+                @for (hint of card.word.toneHints; track hint.char) {
+                  <p class="tone-hint-line">
+                    <span>{{ hint.text }}</span>
+                    <button
+                      type="button"
+                      class="tone-hint-detail-link"
+                      (click)="openToneRuleDialog($event, hint.rule)"
+                    >
+                      →詳細
+                    </button>
+                  </p>
+                }
+              </div>
+            }
           }
         </footer>
       }
@@ -546,7 +547,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
     }
     .tone-hint-box {
       width: 100%;
-      margin-top: 4px;
+      margin-top: 10px;
       padding: 8px 12px;
       border-radius: 12px;
       background: var(--banner-bg);
@@ -842,7 +843,7 @@ export class StudyComponent implements OnInit, OnDestroy {
     }
     const card = this.currentCard();
     if (!card) return [];
-    return this.vocab.findRelatedWords(card.word, 6);
+    return this.vocab.findRelatedWords(card.word, 5);
   });
 
   async ngOnInit(): Promise<void> {
