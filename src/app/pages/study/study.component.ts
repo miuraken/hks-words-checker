@@ -466,6 +466,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
       color: var(--text-primary);
     }
     .pinyin-prompt {
+      font-family: 'Roboto', sans-serif;
       font-size: clamp(2rem, 8vw, 3rem);
       color: var(--accent-heading);
     }
