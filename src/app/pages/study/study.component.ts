@@ -307,7 +307,7 @@ import { VocabularyService } from '../../services/vocabulary.service';
                 class="reveal-btn"
                 (click)="revealAnswer()"
               >
-                答えを見る
+                {{ mode() === 'tone' ? 'ピンイン・声調を確認' : '意味を確認' }}
               </button>
             </div>
           } @else {
